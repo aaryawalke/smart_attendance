@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HOD Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f8d7e7, #b5e1f7);
+      min-height: 100vh;
+      padding: 40px 15px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 0.7s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-select, .form-control, .btn {
+      border-radius: 10px;
+    }
+
+    .btn-primary, .btn-danger {
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2 class="text-center mb-4">Welcome, {{ session['user'] }}</h2>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-danger">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- Class Filter Form -->
+  <form method="POST" action="/hod_dashboard" class="row g-3 mb-4">
+    <div class="col-md-12">
+      <label for="class_name" class="form-label">Class</label>
+      <select name="class_name" class="form-select" required>
+        <option value="">-- Select Class --</option>
+        <option value="SE" {% if selected_class == 'SE' %}selected{% endif %}>SE</option>
+        <option value="TE" {% if selected_class == 'TE' %}selected{% endif %}>TE</option>
+        <option value="BE" {% if selected_class == 'BE' %}selected{% endif %}>BE</option>
+      </select>
+    </div>
+    <div class="col-12">
+      <button type="submit" class="btn btn-primary w-100">🎯 Filter</button>
+    </div>
+  </form>
+
+  {% if students %}
+  <!-- Monthly Summary -->
+  <form method="POST" action="/hod_summary" class="text-center mb-4">
+    <input type="hidden" name="class_name" value="{{ selected_class }}">
+    <input type="hidden" name="subject" value="{{ selected_subject }}">
+    <input type="hidden" name="type" value="{{ selected_type }}">
+    <button type="submit" class="btn btn-secondary w-50">📊 View Monthly Summary</button>
+  </form>
+
+  <!-- View Defaulters -->
+  <form method="POST" action="/hod_defaulters" class="text-center mb-4">
+    <input type="hidden" name="class_name" value="{{ selected_class }}">
+    <input type="hidden" name="subject" value="{{ selected_subject }}">
+    <input type="hidden" name="type" value="{{ selected_type }}">
+    <button type="submit" class="btn btn-secondary w-50">🚨 View Defaulters</button>
+  </form>
+  {% endif %}
+
+  <!-- Logout -->
+  <form method="POST" action="/logout" class="text-center mt-4">
+    <button type="submit" class="btn btn-secondary">Logout</button>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

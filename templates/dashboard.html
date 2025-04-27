@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f8d7e7, #b5e1f7);
+      min-height: 100vh;
+      padding: 40px 15px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 0.7s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-select, .form-control, .btn {
+      border-radius: 10px;
+    }
+
+    .btn-primary, .btn-danger {
+      font-weight: 600;
+    }
+
+    .table-bordered td, .table-bordered th {
+      border: 1px solid #dee2e6;
+    }
+
+    .form-check-label {
+      margin-left: 4px;
+    }
+
+    .form-check-input {
+      cursor: pointer;
+    }
+
+    .form-check {
+      display: inline-block;
+      margin: 0 5px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2 class="text-center mb-4">Welcome, {{ session['user'] }}</h2>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-danger">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- Filter Form -->
+  <form method="POST" action="/dashboard" class="row g-3 mb-4">
+    <div class="col-md-4">
+      <label for="class_name" class="form-label">Class</label>
+      <select name="class_name" class="form-select" required>
+        <option value="">-- Select Class --</option>
+        <option value="SE" {% if selected_class == 'SE' %}selected{% endif %}>SE</option>
+        <option value="TE" {% if selected_class == 'TE' %}selected{% endif %}>TE</option>
+        <option value="BE" {% if selected_class == 'BE' %}selected{% endif %}>BE</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label for="subject" class="form-label">Subject</label>
+      <select name="subject" class="form-select" required><option value="">-- Select Subject --</option></select>
+    </div>
+    <div class="col-md-4">
+      <label for="type" class="form-label">Type</label>
+      <select name="type" class="form-select" required>
+        <option value="">-- Select Type --</option>
+        <option value="Theory" {% if selected_type == 'Theory' %}selected{% endif %}>Theory</option>
+        <option value="Practical" {% if selected_type == 'Practical' %}selected{% endif %}>Practical</option>
+      </select>
+    </div>
+    <div class="col-12">
+      <button type="submit" class="btn btn-primary w-100">🎯 Filter</button>
+    </div>
+  </form>
+
+  <!-- Attendance Section -->
+  {% if students %}
+  <form method="POST" action="/summary" class="text-center mb-4">
+    <input type="hidden" name="class_name" value="{{ selected_class }}">
+    <input type="hidden" name="subject" value="{{ selected_subject }}">
+    <input type="hidden" name="type" value="{{ selected_type }}">
+    <button type="submit" class="btn btn-secondary w-50">📊 View Monthly Summary</button>
+  </form>
+
+  <form method="POST" action="/defaulters" class="text-center mb-4">
+    <input type="hidden" name="class_name" value="{{ selected_class }}">
+    <input type="hidden" name="subject" value="{{ selected_subject }}">
+    <input type="hidden" name="type" value="{{ selected_type }}">
+    <button type="submit" class="btn btn-secondary w-50">🚨 View Defaulters</button>
+  </form>
+
+  <form method="POST" action="/mark_attendance">
+    <input type="hidden" name="class_name" value="{{ selected_class }}">
+    <input type="hidden" name="subject" value="{{ selected_subject }}">
+    <input type="hidden" name="type" value="{{ selected_type }}">
+
+    <!-- Date and Time Picker -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <label for="attendance_date" class="form-label">Date</label>
+        <input type="date" id="attendance_date" name="attendance_date" class="form-control">
+      </div>
+      <div class="col-md-6">
+        <label for="attendance_time" class="form-label">Time</label>
+        <input type="time" id="attendance_time" name="attendance_time" class="form-control">
+      </div>
+    </div>
+
+    <h3 class="text-center mb-4">Mark Attendance</h3>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped align-middle text-center shadow-sm">
+        <thead class="table-primary">
+          <tr>
+            <th>Roll No</th>
+            <th>Name</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+          <tr>
+            <td>{{ student.roll_no }}</td>
+            <td>{{ student.name }}</td>
+            <td>
+              <input type="hidden" name="all_ids" value="{{ student.id }}">
+              <div class="d-flex justify-content-center gap-2 flex-wrap">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="status_{{ student.id }}" value="Present" checked>
+                  <label class="form-check-label">Present</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="status_{{ student.id }}" value="Absent">
+                  <label class="form-check-label">Absent</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="status_{{ student.id }}" value="College Work">
+                  <label class="form-check-label">College Work</label>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="text-center mt-4">
+      <button type="submit" class="btn btn-success">✅ Submit Attendance</button>
+    </div>
+  </form>
+  {% endif %}
+
+  <!-- Logout -->
+  <form method="POST" action="/logout" class="text-center mt-4">
+    <button type="submit" class="btn btn-secondary">Logout</button>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const classSubjectMap = JSON.parse('{{ class_subject_map | tojson | safe }}');
+    const classDropdown = document.querySelector("select[name='class_name']");
+    const subjectDropdown = document.querySelector("select[name='subject']");
+
+    function updateSubjects() {
+      const selectedClass = classDropdown.value;
+      subjectDropdown.innerHTML = "<option value=''>-- Select Subject --</option>";
+
+      if (selectedClass in classSubjectMap) {
+        classSubjectMap[selectedClass].forEach(subject => {
+          const option = document.createElement("option");
+          option.value = subject;
+          option.textContent = subject;
+          subjectDropdown.appendChild(option);
+        });
+      }
+    }
+
+    classDropdown.addEventListener("change", updateSubjects);
+
+    const preselectedSubject = "{{ selected_subject }}";
+    const selectedClass = "{{ selected_class }}";
+    if (selectedClass && classSubjectMap[selectedClass]) {
+      updateSubjects();
+      subjectDropdown.value = preselectedSubject;
+    }
+  });
+</script>
+</body>
+</html>
