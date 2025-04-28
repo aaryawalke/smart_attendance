@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Today's Attendance</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <h2>Today's Marked Attendance</h2>
+    <a href="/dashboard" class="btn btn-secondary mb-3">⬅️ Back to Dashboard</a>
+    {% if attendance %}
+    <table class="table table-bordered">
+        <thead class="thead-dark">
+            <tr>
+                <th>Roll No</th>
+                <th>Name</th>
+                <th>Subject</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Date-Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in attendance %}
+            <tr>
+                <td>{{ record.roll_no }}</td>
+                <td>{{ student_map.get(record.roll_no|string, "Unknown") }}</td>
+                <td>{{ record.subject }}</td>
+                <td>{{ record.type }}</td>
+                <td>{{ record.status }}</td>
+                <td>{{ record.date }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="alert alert-warning" role="alert">
+        No attendance marked today yet.
+    </div>
+    {% endif %}
+</div>
+</body>
+</html>

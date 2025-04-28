@@ -136,8 +136,25 @@ def dashboard():
 def hod_dashboard():
     if session.get("role") != "HOD":
         return redirect("/")
+    class_subject_map = {
+        "SE": [
+            "Software Engineering", "Data Structures and algorithm", "Microprocessor", 
+            "Mathematics 3", "Principles of programming languages", 
+            "Project based learning", "Code of conductivity"
+        ],
+        "TE": [
+            "Data Science and Big Data Analytics", "Web Technology", 
+            "Artificial Intelligence", "Software Modeling and Architecture", 
+            "Statistics and Machine Learning"
+        ],
+        "BE": [
+            "High Performance Computing", "Deep Learning", "Natural Language Processing", 
+            "Business Intelligence", "Artificial Intelligence for Big Data Analytics"
+        ]
+    }
 
     selected_class = request.form.get("class_name")
+    selected_subject = request.form.get("subject")
     
     students = []
     if selected_class:
@@ -145,7 +162,9 @@ def hod_dashboard():
 
     return render_template("hod_dashboard.html",
                            students=students,
-                           selected_class=selected_class)
+                           selected_class=selected_class,
+                           selected_subject=selected_subject,
+                           class_subject_map=class_subject_map)
 
 @app.route("/mark_attendance", methods=["POST"])
 def mark_attendance():
@@ -159,30 +178,57 @@ def mark_attendance():
     if date == '' and time == '':
         date_time = str(datetime.datetime.now())
     else:
-       date_time = datetime.datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M:%S.%f")
+        date_time = datetime.datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M:%S.%f")
 
+    is_already_marked = supabase.table("attendance").select("*") \
+        .eq("date", date_time) \
+        .eq("class", selected_class).eq("subject", selected_subject).eq("type", selected_type).execute().data
+    
+    if not is_already_marked:
+        for student_id in all_ids:
+            status = request.form.get(f"status_{student_id}")
+            student_data = supabase.table("students").select("roll_no").eq("id", int(student_id)).execute().data
+            roll_no = student_data[0]["roll_no"] if student_data else "N/A"
 
-    for student_id in all_ids:
-        status = request.form.get(f"status_{student_id}")
-        student_data = supabase.table("students").select("roll_no").eq("id", int(student_id)).execute().data
-        roll_no = student_data[0]["roll_no"] if student_data else "N/A"
+            try:
+                supabase.table("attendance").insert({
+                    "student_id": int(student_id),
+                    "roll_no": roll_no,
+                    "status": status,
+                    "subject": selected_subject,
+                    "type": selected_type,
+                    "class": selected_class,
+                    "date": date_time,
+                    "marked_by": session["user"]
+                }).execute()
+            except Exception as e:
+                flash(f"Error for student ID {student_id}: {str(e)}")
 
-        try:
-            supabase.table("attendance").insert({
-                "student_id": int(student_id),
-                "roll_no": roll_no,
-                "status": status,
-                "subject": selected_subject,
-                "type": selected_type,
-                "class": selected_class,
-                "date": date_time,
-                "marked_by": session["user"]
-            }).execute()
-        except Exception as e:
-            flash(f"Error for student ID {student_id}: {str(e)}")
-
-    flash("Attendance marked successfully.")
+        flash("Attendance marked successfully.", "success")
+    else:
+        flash("Attendance is already marked.", "danger")
     return redirect("/dashboard")
+
+
+@app.route("/today_attendance", methods=["POST"])
+def today_attendance():
+    if session.get("role") != "Teacher":
+        return redirect("/")
+    
+    selected_class = request.form.get("class_name")
+
+    today = datetime.date.today()
+    today_start = today.strftime("%Y-%m-%d 00:00:00")
+    today_end = today.strftime("%Y-%m-%d 23:59:59")
+
+    attendance_data = supabase.table("attendance").select("*") \
+        .gte("date", today_start).lte("date", today_end) \
+        .eq("marked_by", session["user"]).eq("class", selected_class).execute().data
+
+    students = supabase.table("students").select("roll_no", "name").execute().data
+    student_map = {str(s["roll_no"]): s["name"] for s in students}
+
+    return render_template("today_attendance.html", attendance=attendance_data, student_map=student_map)
 
 @app.route("/summary", methods=["POST"])
 def summary():

@@ -60,7 +60,7 @@
 
   <!-- Class Filter Form -->
   <form method="POST" action="/hod_dashboard" class="row g-3 mb-4">
-    <div class="col-md-12">
+    <div class="col-md-6">
       <label for="class_name" class="form-label">Class</label>
       <select name="class_name" class="form-select" required>
         <option value="">-- Select Class --</option>
@@ -68,6 +68,10 @@
         <option value="TE" {% if selected_class == 'TE' %}selected{% endif %}>TE</option>
         <option value="BE" {% if selected_class == 'BE' %}selected{% endif %}>BE</option>
       </select>
+    </div>
+    <div class="col-md-6">
+      <label for="subject" class="form-label">Subject</label>
+      <select name="subject" class="form-select" required><option value="">-- Select Subject --</option></select>
     </div>
     <div class="col-12">
       <button type="submit" class="btn btn-primary w-100">🎯 Filter</button>

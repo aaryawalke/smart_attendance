@@ -67,10 +67,10 @@
 <div class="container">
   <h2 class="text-center mb-4">Welcome, {{ session['user'] }}</h2>
 
-  {% with messages = get_flashed_messages() %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-danger">{{ message }}</div>
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
       {% endfor %}
     {% endif %}
   {% endwith %}
@@ -105,19 +105,26 @@
 
   <!-- Attendance Section -->
   {% if students %}
-  <form method="POST" action="/summary" class="text-center mb-4">
-    <input type="hidden" name="class_name" value="{{ selected_class }}">
-    <input type="hidden" name="subject" value="{{ selected_subject }}">
-    <input type="hidden" name="type" value="{{ selected_type }}">
-    <button type="submit" class="btn btn-secondary w-50">📊 View Monthly Summary</button>
-  </form>
+  <div class="d-flex justify-content-around">
+    <form method="POST" action="/summary" class="text-center mb-4">
+      <input type="hidden" name="class_name" value="{{ selected_class }}">
+      <input type="hidden" name="subject" value="{{ selected_subject }}">
+      <input type="hidden" name="type" value="{{ selected_type }}">
+      <button type="submit" class="btn btn-secondary">📊 View Monthly Summary</button>
+    </form>
 
-  <form method="POST" action="/defaulters" class="text-center mb-4">
-    <input type="hidden" name="class_name" value="{{ selected_class }}">
-    <input type="hidden" name="subject" value="{{ selected_subject }}">
-    <input type="hidden" name="type" value="{{ selected_type }}">
-    <button type="submit" class="btn btn-secondary w-50">🚨 View Defaulters</button>
-  </form>
+    <form method="POST" action="/defaulters" class="text-center mb-4">
+      <input type="hidden" name="class_name" value="{{ selected_class }}">
+      <input type="hidden" name="subject" value="{{ selected_subject }}">
+      <input type="hidden" name="type" value="{{ selected_type }}">
+      <button type="submit" class="btn btn-secondary">🚨 View Defaulters</button>
+    </form>
+
+    <form method="POST" action="/today_attendance" class="text-center mb-4">
+      <input type="hidden" name="class_name" value="{{ selected_class }}">
+      <button type="submit" class="btn btn-secondary">🎗️ View Today's Attendance</button>
+    </form>
+  </div>
 
   <form method="POST" action="/mark_attendance">
     <input type="hidden" name="class_name" value="{{ selected_class }}">
